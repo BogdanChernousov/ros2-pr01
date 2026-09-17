@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Download course kit
+        run: |
+          curl -fsSLo course-kit.tar.gz \
+            https://ros.lms.ci.nsu.ru/downloads/robotics-course-kit-v1-w01-57866a9c98fa.tar.gz
+          printf '%s  %s\n' \
+            57866a9c98fa3abdec27b35a180697ee680bfb0f05cc015970ce306d6d849fea \
+            course-kit.tar.gz | sha256sum -c -
+          mkdir -p .course-kit
+          tar -xzf course-kit.tar.gz -C .course-kit
+
+      - name: Validate environment.json
+        run: python3 -m json.tool evidence/pr01/environment.json > /dev/null
+
+      - name: Run course checker
+        run: python3 .course-kit/v1/tools/check_practice.py PR01 --submission .

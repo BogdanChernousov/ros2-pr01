@@ -1,0 +1,10 @@
+.course-kit/
+build/
+install/
+log/
+__pycache__/
+*.pyc
+*.tar.gz
+.vscode/
+.idea/
+.DS_Store
