@@ -1,17 +1,38 @@
 {
   "schema_version": 1,
-  "practice_id": "replace-with-practice-id",
-  "commit": "replace-with-implementation-commit",
+  "practice_id": "PR01",
+  "commit": "efd29a0e8ecfbf6820538b18f5d2d81d9e309050",
   "course_kit": {
-    "version": "replace-with-course-kit-version",
-    "archive_sha256": "replace-with-64-character-sha256"
+    "version": "v1-w01",
+    "archive_sha256": "57866a9c98fa3abdec27b35a180697ee680bfb0f05cc015970ce306d6d849fea"
   },
-  "commands": ["replace-with-executed-command"],
-  "tests": [{"name": "replace-with-test-name", "status": "passed"}],
+  "commands": [
+    "source /opt/ros/jazzy/setup.bash",
+    "export ROS_DOMAIN_ID=16",
+    "ros2 run turtlesim turtlesim_node",
+    "ros2 run turtlesim turtle_teleop_key",
+    "ros2 node list --no-daemon --spin-time 2",
+    "ros2 topic list -t",
+    "ros2 node info /turtlesim",
+    "ros2 topic type /turtle1/pose",
+    "ros2 topic echo /turtle1/pose --once",
+    "timeout --signal=INT 15s ros2 topic hz /turtle1/pose",
+    "export ROS_DOMAIN_ID=17 && ros2 run turtlesim turtle_teleop_key",
+    "timeout 5s ros2 topic echo /turtle1/pose turtlesim/msg/Pose --once",
+    "export ROS_DOMAIN_ID=16 && ros2 run turtlesim turtle_teleop_key",
+    "timeout 5s ros2 topic echo /turtle1/pose turtlesim/msg/Pose --once"
+  ],
+  "tests": [
+    {"name": "graph visible in domain 16 (/turtlesim, /teleop_turtle)", "status": "passed"},
+    {"name": "topic /turtle1/pose type turtlesim/msg/Pose", "status": "passed"},
+    {"name": "hz /turtle1/pose about 62.5 Hz over 15 s", "status": "passed"},
+    {"name": "domain split: pose not delivered, exit=124", "status": "passed"},
+    {"name": "domain restore: pose delivered, exit=0", "status": "passed"}
+  ],
   "defect": {
-    "reproducer": "Команда и наблюдаемый симптом до исправления",
-    "root_cause": "Причинное объяснение",
-    "proof_after": "Команда и результат после исправления"
+    "reproducer": "Симулятор запущен в домене 16, teleop перезапущен в домене 17. В домене 17 команда ros2 node list показывает только /teleop_turtle, а ros2 topic echo /turtle1/pose завершается по таймауту с кодом 124: поза не приходит.",
+    "root_cause": "Номер домена задаётся при запуске ноды и определяет, каких участников она видит. Ноды в разных доменах друг друга не обнаруживают, поэтому подписчик в домене 17 не получает сообщения от издателя в домене 16. Изменить домен уже запущенной ноды через export нельзя — нужен перезапуск.",
+    "proof_after": "Teleop перезапущен в домене 16. Команда ros2 node list снова видит /turtlesim и /teleop_turtle, ros2 topic echo /turtle1/pose возвращает позу с кодом 0, стрелки снова двигают черепаху."
   },
   "claims": {
     "public_tests_passed": true,
@@ -19,8 +40,8 @@
     "defect_fixed": true
   },
   "time": {
-    "contact_academic_hours": "replace-with-number",
-    "self_study_hours": "replace-with-number"
+    "contact_academic_hours": 2,
+    "self_study_hours": 2
   },
-  "ai_used": false
+  "ai_used": true
 }
