@@ -71,3 +71,67 @@ Ubuntu 24.04, ROS 2 Jazzy, native Ubuntu (dual-boot).
 
     python3 -m json.tool evidence/pr01/environment.json > /dev/null
     python3 .course-kit/v1/tools/check_practice.py PR01 --submission .
+
+
+---
+
+# ПР02 — терминал, пакет и запуск turtlesim
+
+## Среда
+
+Тот же репозиторий, Ubuntu 24.04, ROS 2 Jazzy, native.
+Course kit v1-w04.
+
+## Пакет
+
+src/turtle_bringup/ — ament_python пакет с launch-файлом.
+Зависимости: launch, launch_ros, turtlesim.
+В setup.py добавлен glob и запись data_files для launch.
+
+## Сборка
+
+Терминал 1 (только базовая ROS):
+
+    source /opt/ros/jazzy/setup.bash
+    colcon build --symlink-install --packages-select turtle_bringup \
+      2>&1 | tee evidence/pr02/build.txt
+
+## Запуск
+
+Терминал 2 (ROS + overlay):
+
+    source /opt/ros/jazzy/setup.bash
+    source install/setup.bash
+    export ROS_DOMAIN_ID=16
+    ros2 launch turtle_bringup sim.launch.py
+
+В Терминале 1: ros2 node list --no-daemon --spin-time 2 видит /turtlesim.
+Ctrl+C в Терминале 2 останавливает turtlesim.
+
+## Связь команды с движением
+
+Терминал 3:
+
+    ros2 topic pub --once /turtle1/cmd_vel geometry_msgs/msg/Twist \
+      '{linear: {x: 1.0}, angular: {z: 0.5}}'
+
+Поза до/после — ros2 topic echo /turtle1/pose --once в Терминале 1.
+
+## Сбой и исправление
+
+Сбой: команда в /cmd_vel — издатель есть, подписчиков нет, черепаха стоит.
+Исправление: то же сообщение в /turtle1/cmd_vel.
+
+## Evidence
+
+    evidence/pr02/
+    ├── build-empty.txt
+    ├── build.txt
+    ├── commands.md
+    ├── types.md
+    └── report.json
+
+## Проверка
+
+    python3 -m py_compile src/turtle_bringup/launch/sim.launch.py
+    python3 .course-kit/v1/tools/check_practice.py PR02 --submission .
