@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 env:
-  COURSE_KIT_URL: https://ros.lms.ci.nsu.ru/downloads/robotics-course-kit-v1-w04-fec6b4e886c1.tar.gz
-  COURSE_KIT_SHA256: fec6b4e886c19146078bf69fbf90a19279a4cd33f656642395350b299efeb226
+  COURSE_KIT_URL: https://ros.lms.ci.nsu.ru/downloads/robotics-course-kit-v1-w05-bca214e3de6f.tar.gz
+  COURSE_KIT_SHA256: bca214e3de6f90f9513049dfa0f36fee65ad834da502dc3f3f8fb443517b5197
 
 jobs:
   test:
@@ -20,14 +20,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build PR02 launch package
+      - name: Build patrol package
         shell: bash
         run: |
           source /opt/ros/jazzy/setup.bash
-          colcon build --symlink-install --packages-select turtle_bringup
+          colcon build --symlink-install --packages-select patrol
+
+      - name: Run patrol tests
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
           source install/setup.bash
-          test -f "$(ros2 pkg prefix turtle_bringup)/share/turtle_bringup/launch/sim.launch.py"
-          python3 -m py_compile src/turtle_bringup/launch/sim.launch.py
+          python3 -m pytest src/patrol/test
 
       - name: Download course kit
         shell: bash
@@ -37,6 +41,6 @@ jobs:
           mkdir -p .course-kit
           tar -xzf course-kit.tar.gz -C .course-kit
 
-      - name: Check PR02 evidence
+      - name: Check PR03 evidence
         shell: bash
-        run: python3 .course-kit/v1/tools/check_practice.py PR02 --submission .
+        run: python3 .course-kit/v1/tools/check_practice.py PR03 --submission .

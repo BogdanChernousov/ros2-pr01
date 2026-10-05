@@ -135,3 +135,56 @@ Ctrl+C в Терминале 2 останавливает turtlesim.
 
     python3 -m py_compile src/turtle_bringup/launch/sim.launch.py
     python3 .course-kit/v1/tools/check_practice.py PR02 --submission .
+
+
+
+# ПР03 — первая нода: поза и команда
+
+## Среда
+
+Тот же репозиторий, Ubuntu 24.04, ROS 2 Jazzy, native.
+Course kit v1-w05.
+
+## Пакет
+
+src/patrol/ — ament_python пакет с нодой patrol.
+Зависимости: rclpy, geometry_msgs, turtlesim (для типа Pose).
+
+Нода patrol:
+- подписка на /turtle1/pose, callback сохраняет последнее сообщение;
+- таймер 0.1 с, публикует geometry_msgs/msg/Twist в относительный cmd_vel;
+- чистая функция choose_command(pose) выбирает команду.
+
+## Сборка и тесты
+
+    source /opt/ros/jazzy/setup.bash
+    colcon build --symlink-install --packages-select patrol
+    source install/setup.bash
+    python3 -m pytest src/patrol/test
+
+## Запуск (с remap)
+
+    ros2 run turtlesim turtlesim_node       # в отдельном терминале
+    ros2 run patrol patrol --ros-args -r cmd_vel:=/turtle1/cmd_vel
+
+Без remap нода публикует в /cmd_vel, где нет подписчиков.
+С remap команда приходит в /turtle1/cmd_vel, и черепаха двигается.
+
+## Частота команды
+
+    timeout --signal=INT 10s ros2 topic hz /turtle1/cmd_vel
+
+Ожидаемо ~10 Гц (таймер 0.1 с).
+
+## Evidence
+
+    evidence/pr03/
+    ├── demo.md
+    ├── hz.txt
+    ├── tests.txt
+    └── report.json
+
+## Проверка
+
+    python3 -m pytest src/patrol/test
+    python3 .course-kit/v1/tools/check_practice.py PR03 --submission .
