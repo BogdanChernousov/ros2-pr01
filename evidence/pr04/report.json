@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "practice_id": "PR04",
+  "commit": "a2bed21e8f8a37ff046743b0a89ddbd60d5e4362",
+  "course_kit": {
+    "version": "v1-w07",
+    "archive_sha256": "001f7ec79674d09a0f7eff2ad0935f58c95101b0cf200425c368f41579d6a31c"
+  },
+  "commands": [
+    "ros2 param set /patrol publish_hz 5.0",
+    "ros2 param set /patrol publish_hz 0.0",
+    "ros2 service call /clear std_srvs/srv/Empty",
+    "ros2 action list -t"
+  ],
+  "tests": [
+    {"name": "test_validate_ok (valid boundaries)", "status": "passed"},
+    {"name": "test_validate_zero_hz (0.0 rejected)", "status": "passed"},
+    {"name": "test_validate_negative_hz (negative rejected)", "status": "passed"},
+    {"name": "test_validate_nan_hz (NaN rejected)", "status": "passed"},
+    {"name": "test_choose_command_with_pose (uses new params)", "status": "passed"},
+    {"name": "test_choose_command_no_pose (zero command)", "status": "passed"}
+  ],
+  "defect": {
+    "reproducer": "Временно отключена проверка validate_parameters. ros2 param set /patrol publish_hz 0.0 приводит к ZeroDivisionError: float division by zero в методе _parameter_callback при пересоздании таймера (1.0 / 0.0). Нода падает.",
+    "root_cause": "Параметр publish_hz напрямую участвует в вычислении периода таймера. Без предварительной проверки ноль или отрицательное значение вызывают деление на ноль или некорректный период.",
+    "proof_after": "Проверка включена. ros2 param set /patrol publish_hz 0.0 возвращает Setting parameter failed, в лог пишется предупреждение, нода продолжает работу со старой частотой. Тест на NaN также проходит"
+  },
+  "claims": {
+    "public_tests_passed": true,
+    "defect_reproduced": true,
+    "defect_fixed": true
+  },
+  "time": {
+    "contact_academic_hours": 2,
+    "self_study_hours": 2
+  },
+  "ai_used": true
+}
