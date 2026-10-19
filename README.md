@@ -188,3 +188,46 @@ src/patrol/ — ament_python пакет с нодой patrol.
 
     python3 -m pytest src/patrol/test
     python3 .course-kit/v1/tools/check_practice.py PR03 --submission .
+
+
+
+# ПР04 — параметризуем движение
+
+## Среда
+
+Тот же репозиторий, Ubuntu 24.04, ROS 2 Jazzy, native.
+Course kit v1-w07.
+
+## Параметры ноды patrol
+
+- `linear_speed` (0–1 м/с, по умолчанию 0.5)
+- `turn_rate` (-1–1 рад/с, по умолчанию 0.3)
+- `publish_hz` (1–30 Гц, по умолчанию 10.0)
+
+Валидация в `validate_parameters()` отклоняет NaN, 0 и выход за пределы.
+Смена `publish_hz` пересоздаёт таймер (старый уничтожается).
+
+## Проверка
+
+    # Смена частоты (10 -> 5 Гц)
+    ros2 param set /patrol publish_hz 5.0
+
+    # Отклонение нуля
+    ros2 param set /patrol publish_hz 0.0
+    # Setting parameter failed
+
+    # Запуск тестов
+    python3 -m pytest src/patrol/test
+
+## Сервисы и действия
+
+    ros2 service call /clear std_srvs/srv/Empty
+    ros2 action list -t
+    # /turtle1/rotate_absolute [turtlesim/action/RotateAbsolute]
+
+## Evidence
+
+    evidence/pr04/
+    ├── parameters.md
+    ├── tests.txt
+    └── report.json
