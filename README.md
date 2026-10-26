@@ -231,3 +231,69 @@ Course kit v1-w07.
     ├── parameters.md
     ├── tests.txt
     └── report.json
+
+
+---
+
+# ПР05 — Launch, QoS и повтор записи
+
+## Среда
+
+Тот же репозиторий, Ubuntu 24.04, ROS 2 Jazzy, native.
+Course kit v1-w08.
+
+## Пакеты
+
+`course_bringup` содержит launch-файл `patrol.launch.py`, ноду `pose_relay` (публикует `sensor_pose` с `best_effort`) и ноду `pose_listener` (подписчик с настраиваемым QoS).
+Используется пакет `patrol` из ПР04.
+
+## Запуск системы
+
+Одной командой поднимается turtlesim, patrol, relay и listener в namespace `robot_a`:
+
+    ros2 launch course_bringup patrol.launch.py \
+      namespace:=robot_a subscriber_reliability:=best_effort record:=false
+
+## Сбой (несовместимый QoS)
+
+Если запустить подписчик с `reliable`, он не получает поток `best_effort`:
+
+    ros2 launch course_bringup patrol.launch.py \
+      namespace:=robot_a subscriber_reliability:=reliable record:=false
+
+    # В другом терминале:
+    timeout 3s ros2 topic echo /robot_a/sensor_pose \
+      --qos-reliability reliable --once
+    # exit=124 (сообщений нет)
+
+Топик виден в `ros2 topic list`, но в логах обеих нод появляется:
+`incompatible QoS. Last incompatible policy: RELIABILITY`.
+
+## Исправление и запись
+
+Меняем QoS подписчика на `best_effort` и включаем запись в MCAP:
+
+    ros2 launch course_bringup patrol.launch.py \
+      namespace:=robot_a subscriber_reliability:=best_effort \
+      record:=true bag_dir:=evidence/pr05/bag
+
+## Проверка записи (Replay)
+
+Воспроизведение сохраненного bag-файла с применением оверрайда QoS:
+
+    ros2 bag play evidence/pr05/bag \
+      --qos-profile-overrides-path src/course_bringup/config/qos-overrides.yaml
+
+Проверка, что `best_effort` получает данные из записи:
+
+    timeout 3s ros2 topic echo /robot_a/sensor_pose \
+      --qos-reliability best_effort --once
+
+## Evidence
+
+    evidence/pr05/
+    ├── qos-before.txt
+    ├── qos-after.txt
+    ├── bag-metadata.yaml
+    ├── bag/
+    └── report.json
