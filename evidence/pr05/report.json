@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "practice_id": "PR05",
+  "commit": "c8a63e936ef6e7fcb0b36bfd058b82dc05f94c5f",
+  "course_kit": {
+    "version": "v1-w08",
+    "archive_sha256": "aea8efd0a51668af63f2e475b82bfa28bd76c21f20d8afea6b136d43a56a88fb"
+  },
+  "commands": [
+    "ros2 launch course_bringup patrol.launch.py namespace:=robot_a subscriber_reliability:=reliable record:=false",
+    "timeout 3s ros2 topic echo /robot_a/sensor_pose --qos-reliability reliable --once",
+    "ros2 launch course_bringup patrol.launch.py namespace:=robot_a subscriber_reliability:=best_effort record:=true bag_dir:=evidence/pr05/bag",
+    "timeout 3s ros2 topic echo /robot_a/sensor_pose --qos-reliability best_effort --once",
+    "ros2 bag info evidence/pr05/bag",
+    "ros2 bag play evidence/pr05/bag --qos-profile-overrides-path src/course_bringup/config/qos-overrides.yaml"
+  ],
+  "tests": [
+    {"name": "topic /robot_a/sensor_pose visible in namespace", "status": "passed"},
+    {"name": "reliable subscriber timeout (exit=124) on best_effort publisher", "status": "passed"},
+    {"name": "best_effort subscriber receives messages", "status": "passed"},
+    {"name": "bag record captured 1556 messages in MCAP", "status": "passed"},
+    {"name": "replay with qos-overrides delivers best_effort", "status": "passed"}
+  ],
+  "defect": {
+    "reproducer": "ros2 launch с subscriber_reliability:=reliable. Топик /robot_a/sensor_pose виден, но ros2 topic echo с флагом --qos-reliability reliable завершается таймаутом (exit=124).",
+    "root_cause": "Издатель pose_relay настроен на BEST_EFFORT, а подписчик требует RELIABLE. В DDS профиль BEST_EFFORT не может обслужить запросы RELIABLE. В логах обеих нод появляется предупреждение: 'incompatible QoS. Last incompatible policy: RELIABILITY'.",
+    "proof_after": "Подписчик переключен на best_effort. Данные начинают поступать. Запись в MCAP и последующий replay с файлом qos-overrides.yaml (устанавливающим best_effort) подтверждают работоспособность."
+  },
+  "claims": {
+    "public_tests_passed": true,
+    "defect_reproduced": true,
+    "defect_fixed": true,
+    "replay_verified": true
+  },
+  "time": {
+    "contact_academic_hours": 2,
+    "self_study_hours": 2
+  },
+  "ai_used": true
+}
